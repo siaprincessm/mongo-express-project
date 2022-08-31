@@ -81,15 +81,37 @@ async function main() {
         }
     }
 
-    if (req.query.min_durationInMinutes){
-        criteria.durationInMinutes = {
-            '$gte':parseInt(req.query.min_durationInMinutes)
+    if (req.query.workoutType) {
+        criteria.workoutType = {
+            '$regex': req.query.workoutType,
+            'options': 'i'
+        }
+    }
+
+    if (req.query.intensity) {
+        criteria.intensity = {
+            '$regex': req.query.intensity,
+            'options': 'i'
+        }
+    }
+
+    if (req.query.equipmentNeeded) {
+        criteria.equipmentNeeded = {
+            '$regex': req.query.equipmentNeeded,
+            'options': 'i'
         }
     }
 
     if (req.query.min_durationInMinutes){
         criteria.durationInMinutes = {
             '$gte':parseInt(req.query.min_durationInMinutes)
+        }
+    }
+
+    if (req.query.exercises){
+        criteria.exercises = {
+            '$regex': req.query.exercises,
+            '$gte':parseInt(req.query.exercises)
         }
     }
 
