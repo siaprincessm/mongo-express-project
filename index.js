@@ -66,7 +66,7 @@ async function main() {
 
    app.get('/', function (req, res) {
         res.json({
-            'message':'i love candies and pastries'
+            'message':'assignment 2'
         });
    })
 
