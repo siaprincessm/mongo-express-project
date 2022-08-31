@@ -1,6 +1,7 @@
 const express = require('express')
 const cors = require('cors');
 require('dotenv').config();
+const jsonwebtoken = require('jsonwebtoken')
 
 
 // console.log(process.env);
