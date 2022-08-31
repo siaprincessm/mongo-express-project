@@ -1,7 +1,7 @@
 const express = require('express')
 const cors = require('cors');
 require('dotenv').config();
-const jsonwebtoken = require('jsonwebtoken')
+const jwt = require('jsonwebtoken')
 
 
 // console.log(process.env);
@@ -14,7 +14,49 @@ app.use(express.json())
 app.use(cors());
 
 const MONGO_URI = process.env.MONGO_URI;
-const DB_NAME = process.env.DB_NAME;
+const DB_NAME = process.env.DB_NAME; 
+const TOKEN_SECRET = process.env.TOKEN_SECRET; 
+
+
+function generateAccessToken(id, email) {
+    return jwt.sign({
+        'id' : id,
+        "email" : email,
+    
+    }, TOKEN_SECRET,{
+         'expiresIn' : '24h'
+})
+}
+
+function checkIfAuthenticatedJWT(req,res,next) { 
+
+        if (req.headers.authorization){
+            const headers = req.headers.authorization;
+            const token = headers.split(" ")[1]; 
+
+        //verify if token is  valid
+        jwt.verify(token, TOKEN_SECRET, function (err, tokenData){
+   
+        if (err) {
+            res.status(403);
+            res.json ({
+                'error' : "Your token is invalid"
+            })
+            return;
+        }
+
+        req.user = tokenData
+        
+        next();
+    })
+
+        } else {
+        res.status(403);
+        res.message ({
+            'error' : "Please provide access token to access this route"
+        })
+    }       
+}
 
 
 async function main() {
@@ -83,6 +125,8 @@ async function main() {
             '_id': ObjectId(req.params.reviewId)
         },{
             "$set":{
+                "mainGoal" : req.body.mainGoal,
+                "workoutType": req.body.workoutType,
                 "intensity": req.body.intensity,
                 "equipmentNeeded": req.body.equipmentNeeded,
                 "durationInMinutes": req.body.durationInMinutes,
@@ -126,6 +170,51 @@ async function main() {
         })
     });
 
+    //POST /users 
+
+    app.post('/users', async function (req,res){
+        const results = await db.collection('users').insertOne({
+                "email": req.body.email,
+                "password": req.body.password
+        });
+    
+        res.json ({
+                "message" : "user has been created",
+                "results" : results
+        })
+    })
+
+    app.post('/login', async function (req,res){
+        const user = await db.collection('users').findOne({
+            'email' : req.body.email,
+            'password' : req.body.password
+        });
+        if (user) {
+            let token = generateAccessToken (user._id, user.email);
+            res.json ({
+                'accessToken' : token 
+            })
+        
+        } else {
+            res.status(401);
+            res.json({
+                'message' : 'Invalid Email and or Password'
+            })
+        }
+    })
+
+    //Get the user profile
+    app.get('/users/:userId', checkIfAuthenticatedJWT,  async function (req,res){
+        
+        res.json({
+            'email' : tokenData.email,
+            'id': tokenData.id,
+            'message' : "You are viewing your profile"
+        })
+
+    })
+
+    
 }
 main();
 
